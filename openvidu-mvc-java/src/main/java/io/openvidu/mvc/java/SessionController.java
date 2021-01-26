@@ -3,6 +3,7 @@ package io.openvidu.mvc.java;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import io.openvidu.java.client.ConnectionProperties;
 import io.openvidu.java.client.ConnectionType;
 import io.openvidu.java.client.OpenVidu;
+import io.openvidu.java.client.OpenViduHttpException;
+import io.openvidu.java.client.OpenViduJavaClientException;
 import io.openvidu.java.client.OpenViduRole;
 import io.openvidu.java.client.Session;
 
@@ -81,6 +84,27 @@ public class SessionController {
 		this.OPENVIDU_URL = openviduUrl;
 		this.openVidu = new OpenVidu(OPENVIDU_URL, SECRET);
 	}
+	
+	private Session already; // 미리 방 하나 만들어두고 시작하자
+	private String token;
+	@PostConstruct
+	public void init() {
+		ConnectionProperties connectionProperties = new ConnectionProperties.Builder()
+				.type(ConnectionType.WEBRTC)
+				.role(OpenViduRole.PUBLISHER).data("Already").build();
+		
+		try {
+			already = this.openVidu.createSession();
+			token = already.createConnection(connectionProperties).getToken();
+			
+			this.mapSessions.put("already", already);
+			this.mapSessionNamesTokens.put("already", new ConcurrentHashMap<>()); // 방 세션에 넣어줄 참가자들 정보 저장
+			this.mapSessionNamesTokens.get("already").put(token, OpenViduRole.PUBLISHER);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	} 
 
 	// sessionName : dashboard에서 작성한 입장할 방이름
 	// clientData  : dashboard에서 작성한 이름
@@ -95,7 +119,7 @@ public class SessionController {
 		// 입장할 사람의 역할과 입장할 사람의 이름 가져와( 로그인 정보에 있는 이름 )
 		OpenViduRole role = LoginController.users.get(httpSession.getAttribute("loggedUser")).role;
 		String serverData = "{\"serverData\": \"" + httpSession.getAttribute("loggedUser") + "\"}";
-
+	
 		/*
 		 * ??
 		 * Optional data to be passed to other users when this user connects to the
@@ -166,6 +190,7 @@ public class SessionController {
 		} else { // 새로운 방 생성하는 곳
 			try {
 				// 새로운 방을 판다! -> 새 세션을 만든다
+				// https://docs.openvidu.io/en/2.16.0/api/openvidu-java-client/io/openvidu/java/client/Session.html
 				Session session = this.openVidu.createSession();
 				// 그 방에 넣어줄 사람의 토큰을 발행
 				String token = session.createConnection(connectionProperties).getToken();
@@ -201,8 +226,8 @@ public class SessionController {
 			@RequestParam(name = "token") String token, Model model, HttpSession httpSession) throws Exception {
 
 		// 마찬가지로 먼저 로그인되어있는지 확인
-		try { checkUserLogged(httpSession);} 
-		catch (Exception e) {return "index";}
+//		try { checkUserLogged(httpSession);} 
+//		catch (Exception e) {return "index";}
 		
 		System.out.println("Removing user | sessioName=" + sessionName + ", token=" + token);
 

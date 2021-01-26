@@ -15,6 +15,8 @@
 <!--       - subscribe 									-->
 <!--       - videoElementCreated - appendUserDate 실행	-->
 
+<!-- videoElementCreated -> event.element.srcObject : 비디오 객체 -->
+
 <head>
 <title>openvidu-mvc-java</title>
 
@@ -99,7 +101,7 @@
 	var nickName = [[${ nickName }]];
 	var userName = [[${ userName }]];
 
-	console.warn('Request of TOKEN gone WELL (TOKEN:' + token + ')');
+ 	console.warn('Request of TOKEN gone WELL (TOKEN:' + token + ')');
 
 	// --- 1) Get an OpenVidu object ---
 	// https://docs.openvidu.io/en/2.16.0/api/openvidu-browser/classes/openvidu.html
@@ -114,8 +116,9 @@
 	// 	기존 연결에 새로운 연결을 추가할때, 처음 연결때는 존재하는 연결이 없기 떄문에 실행안된다
 	//  그 이후엔 방에 있는 사람들만큼 실행된다
 	// 	https://docs.openvidu.io/en/2.16.0/api/openvidu-browser/classes/streamevent.html
-	// 	streamCreated - 세션에 입장해서 비디오 송출 시작하려할때 보내지는 이벤트...??
+	// 	streamCreated - 세션에 입장해서 비디오 송출 시작하려할때 세션과 퍼블리셔(?)에게 보내지는 이벤트
 	session.on('streamCreated', (event) => {
+		
 		// Subscribe to the Stream to receive it
 		// video-container에 추가할거야
 		var subscriber = session.subscribe(event.stream, 'video-container');
@@ -124,9 +127,8 @@
 		// https://docs.openvidu.io/en/2.16.0/api/openvidu-browser/classes/videoelementevent.html
 		// videoElementCreated : 새로운 비디오가 추가될때마다 보내지는 이벤트
 		
-		// 이미 방에 들어와있는 참가자가 있을경우에 이 부분 실행, 그 참가자에게 내 정보를 이어준다?
+		// videoElementCreated : 이미 방에 들어와있는 참가자가 있을경우에 이 부분 실행, 그 참가자와 나에게 내 정보를 이어준다?
 		subscriber.on('videoElementCreated', (event) => {
-			// Add a new HTML element for the user's name and nickname over its video
 			appendUserData(event.element, subscriber.stream.connection);
 		});
 	});
@@ -295,7 +297,7 @@
 	}
 
 	function initMainVideo(videoElement, userData) {
-		$('#main-video video').get(0).srcObject = videoElement.srcObject;
+		$('#main-video video').get(0).srcObject = videoElement.srcObject; // 비디오 객체?
 		$('#main-video p.nickName').html(userData.nickName);
 		$('#main-video p.userName').html(userData.userName);
 		$('#main-video video').prop('muted', true);
