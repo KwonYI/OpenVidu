@@ -88,8 +88,7 @@
 	OV = new OpenVidu();
 	session = OV.initSession();
 
-	session.on('streamCreated', (event) => {
-		
+	session.on('streamCreated', (event) => { // 기존에 존재하는 연결들과 연결한다
 		var subscriber = session.subscribe(event.stream, 'video-container');
 		
 		subscriber.on('videoElementCreated', (event) => {
@@ -232,10 +231,6 @@
 		$('#main-video p.nickName').html(userData.nickName);
 		$('#main-video p.userName').html(userData.userName);
 		$('#main-video video').prop('muted', true);
-	}
-
-	function initMainVideoThumbnail() {// 서브스크라이버일 경우에만 실행
-		$('#main-video video').css("background", "url('images/subscriber-msg.jpg') round");
 	}
 	
 	function returnRole() { // 로그인한 사람의 역할

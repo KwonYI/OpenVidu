@@ -36,13 +36,14 @@ public class SessionController {
 		this.openVidu = new OpenVidu(OPENVIDU_URL, SECRET);
 	}
 	
-	private Session already; // 미리 방 하나 만들어두고 시작하자
+	private Session already;
 	private String token;
+	
 	@PostConstruct
 	public void init() {
 		ConnectionProperties connectionProperties = new ConnectionProperties.Builder()
 				.type(ConnectionType.WEBRTC)
-				.role(OpenViduRole.PUBLISHER).data("Already").build();
+				.role(OpenViduRole.MODERATOR).data("Already").build();
 		
 		try {
 			already = this.openVidu.createSession();
@@ -71,16 +72,16 @@ public class SessionController {
 														.type(ConnectionType.WEBRTC)
 														.role(role).data(serverData).build();
 
-		// System.out.println(connectionProperties.getData()); -> "serverData"
-		// System.out.println(connectionProperties.getRole()); -> role
-		// System.out.println(connectionProperties.getRtspUri()); -> null
-		// System.out.println(connectionProperties.getKurentoOptions()); -> null
-		// System.out.println(connectionProperties.getType()); -> WEBRTC
-		// System.out.println(connectionProperties.getNetworkCache()); -> null
+//		 System.out.println(connectionProperties.getData()); -> "serverData"
+//		 System.out.println(connectionProperties.getRole()); -> role
+//		 System.out.println(connectionProperties.getRtspUri()); -> null
+//		 System.out.println(connectionProperties.getKurentoOptions()); -> null
+//		 System.out.println(connectionProperties.getType()); -> WEBRTC
+//		 System.out.println(connectionProperties.getNetworkCache()); -> null
 
-		if (this.mapSessions.get(sessionName) != null) {
+		if (this.mapSessions.get(sessionName) != null) { // 이미 있는 방인경우 세션값 얻어온다
 			try {
-				String token = this.mapSessions.get(sessionName).createConnection(connectionProperties).getToken();
+				String token = this.mapSessions.get(sessionName).createConnection(connectionProperties).getToken(); // 사람마다 다르다
 
 				System.out.println(sessionName + " 방은 이미 있어 ");
 				System.out.println("이 방의 세션은 " + this.mapSessions.get(sessionName) + " 이야");
@@ -146,6 +147,7 @@ public class SessionController {
 			if (this.mapSessionNamesTokens.get(sessionName).remove(token) != null) {
 				// 방이 비어있으면 방 자체를 지워준다
 				if (this.mapSessionNamesTokens.get(sessionName).isEmpty()) {
+					System.out.println("방이 비어있어서 버릴거야");
 					this.mapSessions.remove(sessionName);
 				}
 				return "redirect:/dashboard";
